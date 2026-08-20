@@ -1,4 +1,5 @@
 const { inngest } = require("./client");
+const { reports } = require("../store");
 
 const sayHello = inngest.createFunction(
   { id: "say-hello", triggers: [{ event: "test/hello" }] },
@@ -8,4 +9,18 @@ const sayHello = inngest.createFunction(
   },
 );
 
-module.exports = { sayHello };
+const makeReport = inngest.createFunction(
+  { id: "make-report", triggers: [{ event: "report/requested" }] },
+  async ({ event, step }) => {
+    const { id, topic } = event.data;
+
+    await step.sleep("do-the-slow-work", "8s");
+
+    await step.run("build-report", async () => {
+      const report = reports.get(id);
+      report.status = "done";
+      report.result = `Here is your report about ${topic}.`;
+    });
+
+
+module.exports = { sayHello, makeReport };

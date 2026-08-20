@@ -28,4 +28,25 @@ const makeReport = inngest.createFunction(
   },
 );
 
-module.exports = { sayHello, makeReport };
+const heartbeat = inngest.createFunction(
+  { id: "heartbeat", triggers: [{ cron: "* * * * *" }] },
+  async ({ step }) => {
+    await step.run("log-summary", async () => {
+      let pending = 0;
+      let done = 0;
+      let failed = 0;
+
+      for (const report of reports.values()) {
+        if (report.status === "pending") pending++;
+        else if (report.status === "done") done++;
+        else if (report.status === "failed") failed++;
+      }
+
+      console.log(
+        `Heartbeat: ${pending} pending, ${done} done, ${failed} failed`,
+      );
+    });
+  },
+);
+
+module.exports = { sayHello, makeReport, heartbeat };
